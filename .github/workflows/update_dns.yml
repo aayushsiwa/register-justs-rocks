@@ -1,0 +1,56 @@
+name: Update Cloudflare DNS Records
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'domain/*.json'  # Only trigger for changes in domain/*.json
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - 'domain/*.json'  # Only trigger for changes in domain/*.json
+
+jobs:
+  update-dns:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Fetch last two commits to compare changes
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Get changed JSON files
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            # Get changed files in the domain folder
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- domain/*.json || echo "")
+          else
+            # Get changed files in the merged pull request
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- domain/*.json || echo "")
+          fi
+          # Convert to JSON array for Python
+          CHANGED_FILES_JSON=$(echo "$CHANGED_FILES" | jq -R . | jq -s .)
+          echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
+
+      - name: Process changed JSON files and update DNS
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CHANGED_FILES: ${{ steps.changed-files.outputs.changed_files }}
+        run: |
+          python .github/scripts/update_dns.py "$CHANGED_FILES"
