@@ -1,0 +1,21 @@
+name: Validate JSON Files
+
+on:
+  pull_request:
+    paths:
+      - 'domains/*.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate JSON files
+        run: |
+          for file in domains/*.json; do
+            if [ -f "$file" ]; then
+              jq . "$file" > /dev/null || { echo "Invalid JSON in $file"; exit 1; }
+            fi
+          done
