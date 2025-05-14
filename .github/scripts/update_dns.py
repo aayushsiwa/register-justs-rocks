@@ -59,10 +59,12 @@ def main():
         print("No changed files provided. Exiting.")
         return
 
+    raw_input = sys.argv[1]
+    print(f"Raw input: {raw_input}")
     try:
-        changed_files = json.loads(sys.argv[1])
+        changed_files = json.loads(raw_input)
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON input: {sys.argv[1]}")
+        print(f"Error: Invalid JSON input: {raw_input}")
         print(f"JSON decode error: {str(e)}")
         sys.exit(1)
 
