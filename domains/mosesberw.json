@@ -1,0 +1,10 @@
+{
+  "owner": {
+    "username": "mosesberw",
+    "email": "admin@justs.rocks"
+  },
+  "records": {
+    "CNAME": "mosesberw.github.io"
+  },
+  "proxied": true
+}
