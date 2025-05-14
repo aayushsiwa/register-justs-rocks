@@ -22,7 +22,6 @@ def get_existing_records():
 
 def create_or_update_record(subdomain, record_type, content, proxied):
     """Create or update a DNS record in Cloudflare."""
-    # Check if record already exists
     existing_records = get_existing_records()
     record_name = f"{subdomain}.justs.rocks"
     record_id = None
@@ -32,7 +31,6 @@ def create_or_update_record(subdomain, record_type, content, proxied):
             record_id = record['id']
             break
 
-    # Prepare payload
     payload = {
         "type": record_type,
         "name": record_name,
@@ -42,19 +40,16 @@ def create_or_update_record(subdomain, record_type, content, proxied):
     }
 
     if record_id:
-        # Update existing record
         url = f"{API_BASE_URL}/{record_id}"
         response = requests.put(url, headers=HEADERS, json=payload)
         print(f"Updated DNS record for {record_name}")
     else:
-        # Create new record
         response = requests.post(API_BASE_URL, headers=HEADERS, json=payload)
         print(f"Created DNS record for {record_name}")
 
     response.raise_for_status()
 
 def main():
-    # Get changed files from command-line argument (JSON array)
     if len(sys.argv) < 2:
         print("No changed files provided. Exiting.")
         return
@@ -72,26 +67,34 @@ def main():
         print("No JSON files changed. Exiting.")
         return
 
+    has_error = False
     for json_file in changed_files:
-        # Ensure file is in domains/ directory
         if not json_file.startswith('domains/') or not json_file.endswith('.json'):
             print(f"Skipping invalid file: {json_file} (must be in domains/ and end with .json)")
             continue
 
         try:
             with open(json_file, 'r') as f:
-                data = json.load(f)
+                file_content = f.read()
+                data = json.loads(file_content)
 
             subdomain = json_file.split('/')[-1].replace('.json', '')
             records = data.get('records', {})
             proxied = data.get('proxied', False)
 
-            # Process each record type in the JSON
             for record_type, content in records.items():
                 print(f"Processing {record_type} record for {subdomain}.justs.rocks")
                 create_or_update_record(subdomain, record_type, content, proxied)
+        except json.JSONDecodeError as e:
+            print(f"Error processing {json_file}: Invalid JSON: {str(e)}")
+            print(f"File content: {file_content}")
+            has_error = True
         except Exception as e:
             print(f"Error processing {json_file}: {str(e)}")
+            has_error = True
+
+    if has_error:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
