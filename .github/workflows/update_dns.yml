@@ -53,7 +53,10 @@ jobs:
             CHANGED_FILES_JSON=$(printf "%s\n" "$CHANGED_FILES" | jq -R . | jq -s .)
           fi
           echo "JSON output: $CHANGED_FILES_JSON"
-          echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
+          # Write to GITHUB_OUTPUT using multiline format
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Process changed JSON files and update DNS
         if: steps.changed-files.outputs.changed_files != '[]'
@@ -62,4 +65,5 @@ jobs:
           CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CHANGED_FILES: ${{ steps.changed-files.outputs.changed_files }}
         run: |
+          echo "Python input: $CHANGED_FILES"
           python .github/scripts/update_dns.py "$CHANGED_FILES"
