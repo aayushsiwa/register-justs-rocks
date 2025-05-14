@@ -59,14 +59,21 @@ def main():
         print("No changed files provided. Exiting.")
         return
 
-    changed_files = json.loads(sys.argv[1])
+    try:
+        changed_files = json.loads(sys.argv[1])
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON input: {sys.argv[1]}")
+        print(f"JSON decode error: {str(e)}")
+        sys.exit(1)
+
     if not changed_files:
         print("No JSON files changed. Exiting.")
         return
 
     for json_file in changed_files:
+        # Ensure file is in domains/ directory
         if not json_file.startswith('domains/') or not json_file.endswith('.json'):
-            print(f"Skipping non-domain JSON file: {json_file}")
+            print(f"Skipping invalid file: {json_file} (must be in domains/ and end with .json)")
             continue
 
         try:
