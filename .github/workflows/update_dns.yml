@@ -5,13 +5,13 @@ on:
     branches:
       - main
     paths:
-      - 'domain/*.json'  # Only trigger for changes in domain/*.json
+      - 'domains/*.json'  # Only trigger for changes in domains/*.json
   pull_request:
     types: [closed]
     branches:
       - main
     paths:
-      - 'domain/*.json'  # Only trigger for changes in domain/*.json
+      - 'domains/*.json'  # Only trigger for changes in domains/*.json
 
 jobs:
   update-dns:
@@ -37,11 +37,11 @@ jobs:
         id: changed-files
         run: |
           if [ "${{ github.event_name }}" == "push" ]; then
-            # Get changed files in the domain folder
-            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- domain/*.json || echo "")
+            # Get changed files in the domains folder
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD -- domains/*.json || echo "")
           else
             # Get changed files in the merged pull request
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- domain/*.json || echo "")
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- domains/*.json || echo "")
           fi
           # Convert to JSON array for Python
           CHANGED_FILES_JSON=$(echo "$CHANGED_FILES" | jq -R . | jq -s .)
