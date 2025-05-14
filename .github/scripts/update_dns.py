@@ -65,7 +65,7 @@ def main():
         return
 
     for json_file in changed_files:
-        if not json_file.startswith('domain/') or not json_file.endswith('.json'):
+        if not json_file.startswith('domains/') or not json_file.endswith('.json'):
             print(f"Skipping non-domain JSON file: {json_file}")
             continue
 
