@@ -5,13 +5,13 @@ on:
     branches:
       - main
     paths:
-      - 'domains/*.json'  # Only trigger for changes in domains/*.json
+      - 'domains/*.json'  # Trigger only for changes in domains/*.json
   pull_request:
     types: [closed]
     branches:
       - main
     paths:
-      - 'domains/*.json'  # Only trigger for changes in domains/*.json
+      - 'domains/*.json'  # Trigger only for changes in domains/*.json
 
 jobs:
   update-dns:
@@ -43,11 +43,20 @@ jobs:
             # Get changed files in the merged pull request
             CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- domains/*.json || echo "")
           fi
-          # Convert to JSON array for Python
-          CHANGED_FILES_JSON=$(echo "$CHANGED_FILES" | jq -R . | jq -s .)
+          # Debug: Log changed files
+          echo "Raw changed files: $CHANGED_FILES"
+          # Convert to JSON array, handling empty input
+          if [ -z "$CHANGED_FILES" ]; then
+            CHANGED_FILES_JSON="[]"
+          else
+            # Use printf to avoid trailing newlines
+            CHANGED_FILES_JSON=$(printf "%s\n" "$CHANGED_FILES" | jq -R . | jq -s .)
+          fi
+          echo "JSON output: $CHANGED_FILES_JSON"
           echo "changed_files=$CHANGED_FILES_JSON" >> $GITHUB_OUTPUT
 
       - name: Process changed JSON files and update DNS
+        if: steps.changed-files.outputs.changed_files != '[]'
         env:
           CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
