@@ -1,54 +1,54 @@
 name: Validate JSON Files
 
 on:
-  pull_request:
-    paths:
-      - 'domains/*.json'
+    pull_request:
+        paths:
+            - "domains/*.json"
 
 permissions:
-  contents: read
-  pull-requests: read
+    contents: read
+    pull-requests: read
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetch all history to allow diff comparison
+    validate:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # Fetch all history to allow diff comparison
 
-      # - name: Install jq
-        # run: sudo apt-get update && sudo apt-get install -y jq
+            # - name: Install jq
+            # run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Get changed JSON files
-        id: changed-files
-        run: |
-          # Get the list of changed JSON files in the PR
-          git fetch origin ${{ github.event.pull_request.base.ref }}
-          changed_files=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD -- domains/*.json)
-          if [ -z "$changed_files" ]; then
-            echo "No JSON files changed in domains/ directory."
-            echo "changed_files=" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          echo "Changed JSON files: $changed_files"
-          echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
+            - name: Get changed JSON files
+              id: changed-files
+              run: |
+                  # Get the list of changed JSON files in the PR
+                  git fetch origin ${{ github.event.pull_request.base.ref }}
+                  changed_files=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD -- domains/*.json)
+                  if [ -z "$changed_files" ]; then
+                    echo "No JSON files changed in domains/ directory."
+                    echo "changed_files=" >> $GITHUB_OUTPUT
+                    exit 0
+                  fi
+                  echo "Changed JSON files: $changed_files"
+                  echo "changed_files=$changed_files" >> $GITHUB_OUTPUT
 
-      - name: Validate changed JSON files
-        run: |
-          changed_files="${{ steps.changed-files.outputs.changed_files }}"
-          if [ -z "$changed_files" ]; then
-            echo "No JSON files to validate."
-            exit 0
-          fi
-          for file in $changed_files; do
-            if [ -f "$file" ]; then
-              if ! error=$(jq . "$file" 2>&1 >/dev/null); then
-                echo "Invalid JSON in $file: $error"
-                exit 1
-              fi
-            else
-              echo "File $file was deleted or renamed, skipping validation."
-            fi
-          done
+            - name: Validate changed JSON files
+              run: |
+                  changed_files="${{ steps.changed-files.outputs.changed_files }}"
+                  if [ -z "$changed_files" ]; then
+                    echo "No JSON files to validate."
+                    exit 0
+                  fi
+                  for file in $changed_files; do
+                    if [ -f "$file" ]; then
+                      if ! error=$(jq . "$file" 2>&1 >/dev/null); then
+                        echo "Invalid JSON in $file: $error"
+                        exit 1
+                      fi
+                    else
+                      echo "File $file was deleted or renamed, skipping validation."
+                    fi
+                  done
