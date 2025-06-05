@@ -1,0 +1,13 @@
+{
+  "description": "Project Description",
+  "domain": "justs.rocks",
+  "subdomain": "aditya",
+  "owner": {
+    "username": "aayushsiwa",
+    "email": "22052177@kiit.ac.in"
+  },
+  "record": {
+    "CNAME": "google.com"
+  },
+  "proxied": false
+}
